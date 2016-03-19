@@ -11,7 +11,7 @@ import (
 	"strings"
 	"unsafe"
 
-	"github.com/xq262144/gobeansdb-client/cmem"
+	"github.com/xq262144/go-beansdb-client/cmem"
 )
 
 const VERSION = "0.1.0"
