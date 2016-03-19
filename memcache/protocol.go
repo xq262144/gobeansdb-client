@@ -108,7 +108,7 @@ func (req *Request) Write(w io.Writer) (e error) {
 		_, e = io.WriteString(w, "\r\n")
 
 	default:
-		ErrorLog.Printf("unkown request cmd:", req.Cmd)
+		Logger.Printf("unkown request cmd:", req.Cmd)
 		return errors.New("unknown cmd: " + req.Cmd)
 	}
 
@@ -222,7 +222,7 @@ func (req *Request) Read(b *bufio.Reader) (e error) {
 		}
 
 	default:
-		ErrorLog.Print("unknown command", req.Cmd)
+		Logger.Print("unknown command", req.Cmd)
 		return errors.New("unknown command: " + req.Cmd)
 	}
 
@@ -247,7 +247,7 @@ func (resp *Response) Read(b *bufio.Reader) error {
 	for {
 		s, e := b.ReadString('\n')
 		if e != nil {
-			ErrorLog.Print("read response line failed", e)
+			Logger.Print("read response line failed", e)
 			return e
 		}
 		parts := strings.Fields(s)
@@ -327,7 +327,7 @@ func (resp *Response) Read(b *bufio.Reader) error {
 			if len(parts) > 1 {
 				resp.msg = parts[1]
 			}
-			ErrorLog.Print("error:", resp)
+			Logger.Print("error:", resp)
 
 		default:
 			// try to convert to int
@@ -337,7 +337,7 @@ func (resp *Response) Read(b *bufio.Reader) error {
 				resp.msg = resp.status
 				resp.status = "INCR"
 			} else {
-				ErrorLog.Print("unknown status:", s, resp.status)
+				Logger.Print("unknown status:", s, resp.status)
 				return errors.New("unknown response:" + resp.status)
 			}
 		}
@@ -593,7 +593,7 @@ func (req *Request) Check(resp *Response) error {
 		if resp.items != nil {
 			for key, _ := range resp.items {
 				if !contain(req.Keys, key) {
-					ErrorLog.Print("unexpected key in response: ", key)
+					Logger.Print("unexpected key in response: ", key)
 					return errors.New("unexpected key in response: " + key)
 				}
 			}

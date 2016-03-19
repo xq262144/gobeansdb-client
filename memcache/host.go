@@ -96,7 +96,7 @@ func (host *Host) execute(req *Request) (resp *Response, err error) {
 
 	err = req.Write(conn)
 	if err != nil {
-		ErrorLog.Print(host.Addr, " write request failed:", err)
+		Logger.Print(host.Addr, " write request failed:", err)
 		conn.Close()
 		return
 	}
@@ -111,13 +111,13 @@ func (host *Host) execute(req *Request) (resp *Response, err error) {
 	reader := bufio.NewReader(conn)
 	err = resp.Read(reader)
 	if err != nil {
-		ErrorLog.Print(host.Addr, " read response failed:", err)
+		Logger.Print(host.Addr, " read response failed:", err)
 		conn.Close()
 		return
 	}
 
 	if err := req.Check(resp); err != nil {
-		ErrorLog.Print(host.Addr, " unexpected response", req, resp, err)
+		Logger.Print(host.Addr, " unexpected response", req, resp, err)
 		conn.Close()
 		return nil, err
 	}
@@ -134,7 +134,7 @@ func (host *Host) executeWithTimeout(req *Request, timeout time.Duration) (resp 
 		resp, err = host.execute(req)
 		done <- true
 		if isTimeout && err == nil {
-			ErrorLog.Printf("request %v to host %s return after timeout, use %d ms", req, host.Addr, time.Since(now)/1e6)
+			Logger.Printf("request %v to host %s return after timeout, use %d ms", req, host.Addr, time.Since(now)/1e6)
 		}
 	}()
 
@@ -143,7 +143,7 @@ func (host *Host) executeWithTimeout(req *Request, timeout time.Duration) (resp 
 	case <-time.After(timeout):
 		isTimeout = true
 		err = fmt.Errorf("request %v timeout", req)
-		ErrorLog.Printf("request %v to host %s timeout", req, host.Addr)
+		Logger.Printf("request %v to host %s timeout", req, host.Addr)
 	}
 	return
 }

@@ -161,7 +161,7 @@ type ManualScheduler struct {
 func NewManualScheduler(config map[string][]string, bs, n int) *ManualScheduler {
 	defer func() {
 		if r := recover(); r != nil {
-			ErrorLog.Fatalln("NewManualScheduler panic, maybe node's supporting bucket more than buckets number")
+			Logger.Println("NewManualScheduler panic, maybe node's supporting bucket more than buckets number")
 		}
 	}()
 	c := new(ManualScheduler)
@@ -183,13 +183,13 @@ func NewManualScheduler(config map[string][]string, bs, n int) *ManualScheduler 
 					c.backups[bucket] = append(c.backups[bucket], no)
 
 				} else {
-					ErrorLog.Println("Parse serving bucket config failed, it was not digital")
+					Logger.Println("Parse serving bucket config failed, it was not digital")
 				}
 			} else {
 				if bucket, e := strconv.ParseInt(bucket_str, 16, 16); e == nil {
 					c.buckets[bucket] = append(c.buckets[bucket], no)
 				} else {
-					ErrorLog.Println("Parse serving bucket config failed, it was not digital")
+					Logger.Println("Parse serving bucket config failed, it was not digital")
 				}
 			}
 		}
@@ -251,7 +251,7 @@ func (c *ManualScheduler) try_reward() {
 			}
 			c.feedChan <- &Feedback{hostIndex: second_node, bucketIndex: i, adjust: second_reward}
 		} else {
-			ErrorLog.Printf("beansdb server : %s in Bucket %X's second node Down while try_reward, the err = %s", c.hosts[second_node].Addr, i, err)
+			Logger.Printf("beansdb server : %s in Bucket %X's second node Down while try_reward, the err = %s", c.hosts[second_node].Addr, i, err)
 		}
 
 		if c.N > 2 {
@@ -266,7 +266,7 @@ func (c *ManualScheduler) try_reward() {
 				}
 				c.feedChan <- &Feedback{hostIndex: third_node, bucketIndex: i, adjust: third_reward}
 			} else {
-				ErrorLog.Printf("beansdb server : %s in Bucket %X's third node Down while try_reward, the err = %s", c.hosts[third_node].Addr, i, err)
+				Logger.Printf("beansdb server : %s in Bucket %X's third node Down while try_reward, the err = %s", c.hosts[third_node].Addr, i, err)
 			}
 		}
 	}
@@ -566,7 +566,7 @@ func (c *AutoScheduler) listHost(host *Host, dir string) {
 func (c *AutoScheduler) check() {
 	defer func() {
 		if e := recover(); e != nil {
-			ErrorLog.Print("error while check()", e)
+			Logger.Print("error while check()", e)
 		}
 	}()
 	bs := len(c.buckets)

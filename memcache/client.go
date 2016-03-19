@@ -246,7 +246,7 @@ func (c *Client) Delete(key string) (r bool, targets []string, err error) {
 		}
 	}
 	if err_count > 0 {
-		ErrorLog.Printf("key: %s was delete failed in %v, and the last erorr is %s", key, failed_hosts, err)
+		Logger.Printf("key: %s was delete failed in %v, and the last erorr is %s", key, failed_hosts, err)
 	}
 	if err_count < 2 {
 		err = nil
