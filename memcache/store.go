@@ -65,7 +65,6 @@ func (s *mapStore) Set(key string, item *Item, noreply bool) (bool, error) {
 
 	item.Cas = rand.Int()
 	it := *item
-	item.alloc = nil
 	s.data[key] = &it
 	return true, nil
 }

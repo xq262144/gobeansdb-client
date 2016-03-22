@@ -5,13 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
-	"runtime"
 	"strconv"
 	"strings"
-	"unsafe"
-
-	"github.com/xq262144/go-beansdb-client/cmem"
 )
 
 const VERSION = "0.1.0"
@@ -21,14 +16,11 @@ const (
 	MaxBodyLength = 1024 * 1024 * 50
 )
 
-var AllocLimit = 1024 * 4
-
 type Item struct {
 	Flag    int
 	Exptime int
 	Cas     int
 	Body    []byte
-	alloc   *byte
 }
 
 func (it *Item) String() (s string) {
@@ -50,12 +42,6 @@ func (req *Request) String() (s string) {
 
 func (req *Request) Clear() {
 	req.NoReply = false
-	if req.Item != nil && req.Item.alloc != nil {
-		cmem.Free(req.Item.alloc, uintptr(cap(req.Item.Body)))
-		req.Item.Body = nil
-		req.Item.alloc = nil
-		req.Item = nil
-	}
 }
 
 func WriteFull(w io.Writer, buf []byte) error {
@@ -175,22 +161,7 @@ func (req *Request) Read(b *bufio.Reader) (e error) {
 			req.NoReply = len(parts) > 5 && parts[5] == "noreply"
 		}
 
-		// FIXME
-		if length > AllocLimit {
-			item.alloc = cmem.Alloc(uintptr(length))
-			item.Body = (*[1 << 30]byte)(unsafe.Pointer(item.alloc))[:length]
-			(*reflect.SliceHeader)(unsafe.Pointer(&item.Body)).Cap = length
-			runtime.SetFinalizer(item, func(item *Item) {
-				if item.alloc != nil {
-					//log.Print("free by finalizer: ", cap(item.Body))
-					cmem.Free(item.alloc, uintptr(cap(item.Body)))
-					item.Body = nil
-					item.alloc = nil
-				}
-			})
-		} else {
-			item.Body = make([]byte, length)
-		}
+		item.Body = make([]byte, length)
 		if _, e = io.ReadFull(b, item.Body); e != nil {
 			return e
 		}
@@ -286,22 +257,7 @@ func (resp *Response) Read(b *bufio.Reader) error {
 				item.Cas = cas
 			}
 
-			// FIXME
-			if length > AllocLimit {
-				item.alloc = cmem.Alloc(uintptr(length))
-				item.Body = (*[1 << 30]byte)(unsafe.Pointer(item.alloc))[:length]
-				(*reflect.SliceHeader)(unsafe.Pointer(&item.Body)).Cap = length
-				runtime.SetFinalizer(item, func(item *Item) {
-					if item.alloc != nil {
-						//log.Print("free by finalizer: ", cap(item.Body))
-						cmem.Free(item.alloc, uintptr(cap(item.Body)))
-						item.Body = nil
-						item.alloc = nil
-					}
-				})
-			} else {
-				item.Body = make([]byte, length)
-			}
+			item.Body = make([]byte, length)
 			if _, e = io.ReadFull(b, item.Body); e != nil {
 				return e
 			}
@@ -387,13 +343,6 @@ func (resp *Response) Write(w io.Writer) error {
 }
 
 func (resp *Response) CleanBuffer() {
-	for _, item := range resp.items {
-		if item.alloc != nil {
-			cmem.Free(item.alloc, uintptr(cap(item.Body)))
-			item.alloc = nil
-		}
-		runtime.SetFinalizer(item, nil)
-	}
 	resp.items = nil
 }
 
